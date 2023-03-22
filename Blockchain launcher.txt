@@ -1,0 +1,1 @@
+ganache-cli --account="0x4f11e05b6908439852b5ea7c97da15738dfadd111b3fc89d4c812423fa929b45,0x1000" -p 8549 -a 1
