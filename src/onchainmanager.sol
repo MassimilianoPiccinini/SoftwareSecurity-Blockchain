@@ -8,6 +8,8 @@ contract OnChainManager {
         string myAddress;
         string myAbi;
     }
+
+    event NextAddressReturned(string nextAddress, uint8 counter);
     
     mapping(string => Contract) private _contracts;
     string private _address1;
@@ -54,8 +56,7 @@ contract OnChainManager {
     }
 
     function setCounter(uint8 counter) public {
-        //_counter = (counter + 1) % 3;
-        _counter = counter + 1;
+        _counter = (counter + 1) % 3;
     }
     
     function getCounter() public view returns (uint8) {
@@ -67,16 +68,18 @@ contract OnChainManager {
 
         uint8 counter = getCounter();
 
-        if (_counter == 0) {
+        if (counter == 0) {
             nextAddress = _address1;
-        } else if (_counter == 1) {
+        } else if (counter == 1) {
             nextAddress = _address2;
-        } else if (_counter == 2) {
+        } else if (counter == 2) {
             nextAddress = _address3;
         }
 
         setCounter(counter);
 
-        return (nextAddress, _counter);
+        emit NextAddressReturned(nextAddress, counter);
+
+        return (nextAddress, counter);
     }
 }

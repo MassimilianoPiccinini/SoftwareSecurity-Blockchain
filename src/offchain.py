@@ -72,17 +72,16 @@ def deploy(w3: Web3, contract: Contract, name: str):
     update_storage(new_map)
     return contract
 
-def read(contract: Contract, function_name: str, args: any):
-    if len(list(args)) == 0:
+def read(contract: Contract, function_name: str, args: list):
+    if len(args) == 0:
         # result = contract.functions.askForDeploySmartContract().call()
         result = contract.functions[function_name]().call()
-    elif len(list(args)) == 1:
+    elif len(args) == 1:
         result = contract.functions[function_name](args[0]).call()
-    elif len(list(args)) == 2:
+    elif len(args) == 2:
         result = contract.functions[function_name](args[0], args[1]).call()
     else:
         result = contract.functions[function_name](args[0], args[1], args[2]).call()
-    # print("Result of contract method call:", result)
     return result
 
 def write(w3: Web3, contract: Contract, function_name: str, args: any):
@@ -97,8 +96,7 @@ def write(w3: Web3, contract: Contract, function_name: str, args: any):
     signedTransaction = w3.eth.account.signTransaction(new_transaction, "0x4f11e05b6908439852b5ea7c97da15738dfadd111b3fc89d4c812423fa929b45")
     transaction_hash = w3.eth.sendRawTransaction(signedTransaction.rawTransaction)
     receipt = w3.eth.waitForTransactionReceipt(transaction_hash)
-    print(receipt.logs[0])
-    onChainSmartContract.events.MyEvent().processReceipt(receipt)
+    return receipt
 
 def init_web3():
     global web3_1
@@ -137,17 +135,13 @@ def loadOnChainManager():
     sc = read_storage("onchainsc")
     if sc is None:
         onChainSmartContract = deploy(web3_1, onChainSmartContract, 'onchainsc')
-
-        my_contract = web3_1.eth.contract(address=onChainSmartContract.address, abi=onChainSmartContract.abi)
-        print("1: " + read(my_contract, "getAddress1", []))
+        # my_contract = web3_1.eth.contract(address=onChainSmartContract.address, abi=onChainSmartContract.abi)
     else:
         onChainSmartContract = web3_1.eth.contract(address=sc["address"], abi=smartContractAbi, bytecode=smartContractBytecode)
     
     write(web3_1, onChainSmartContract, 'setAddress1', ["http://127.0.0.1:8546"])
     write(web3_1, onChainSmartContract, 'setAddress2', ["http://127.0.0.1:8547"])
     write(web3_1, onChainSmartContract, 'setAddress3', ["http://127.0.0.1:8548"])
-
-    print("2: " + read(onChainSmartContract, "getAddress1", []))
 
 class Loader(tk.Frame):
     def __init__(self, parent):
@@ -207,13 +201,13 @@ class HomePage(tk.Toplevel):
         label1 = tk.Label(frame1, text="Carica il tuo\nfile in solidity\nin cui è scritto\nlo Smart Contract", font=("Arial", 13))
         label1.pack(fill=tk.BOTH, expand=1)
 
-        button2 = tk.Button(self, image=button2_photo, text="Deploy da address e ABI", compound=tk.TOP, font=("Arial", 12), command=self.button2_clicked)
+        button2 = tk.Button(self, image=button2_photo, text="Deploy da ABI e Bytecode", compound=tk.TOP, font=("Arial", 12), command=self.button2_clicked)
         button2.image = button2_photo
         button2.grid(row=1, column=1, padx=0, pady=10)
         frame2 = tk.Frame(self, height=100, width=100)
         frame2.pack_propagate(0)
         frame2.grid(row=2, column=1, padx=0, pady=10)
-        label2 = tk.Label(frame2, text="Carica il tuo\nSmart Contract\nscrivendo l'ABI\ne l'indirizzo", font=("Arial", 13))
+        label2 = tk.Label(frame2, text="Carica il tuo\nSmart Contract\nscrivendo l'ABI\ne il Bytecode", font=("Arial", 13))
         label2.pack(fill=tk.BOTH, expand=1)
 
         button3 = tk.Button(self, image=button3_photo, text="Chiama metodo", compound=tk.TOP, font=("Arial", 12), command=self.button3_clicked)
@@ -289,29 +283,20 @@ class SolidityPage(tk.Toplevel):
             _, smartContractInterface = compiledSmartContract.popitem()
             smartContractBytecode = smartContractInterface['bin']
             smartContractAbi = smartContractInterface['abi']
-            # print(onChainSmartContract.address, onChainSmartContract.abi, onChainSmartContract.bytecode)
-            '''result = read(onChainSmartContract, "getAddress1", [])
-            print("Result: " + str(result))
-            result = read(onChainSmartContract, "getAddress2", [])
-            print("Result: " + str(result))
-            result = read(onChainSmartContract, "getAddress3", [])
-            print("Result: " + str(result))
-            result = read(onChainSmartContract, "getNextAddress", [])
-            print("Result: " + str(result))
-            result = read(onChainSmartContract, "getNextAddress", [])
-            print("Result: " + str(result))'''
-            result = read(onChainSmartContract, "getCounter", [])
-            print("Get Counter Result: " + str(result))
-            #result = write(web3_1, onChainSmartContract, "setCounter", [result])
-            result = write(web3_1, onChainSmartContract, "getNextAddress", [])
-            print("Get Next Address Result: " + str(result))
-            result = read(onChainSmartContract, "getCounter", [])
-            print("Get Counter Result: " + str(result))
-            result = write(web3_1, onChainSmartContract, "getNextAddress", [])
-            print("Get Next Address Result: " + str(result))
-            result = read(onChainSmartContract, "getCounter", [])
-            print("Get Counter Result: " + str(result))
-            #smartContract = web3_1.eth.contract(abi=smartContractAbi, bytecode=smartContractBytecode)
+            receipt = write(web3_1, onChainSmartContract, "getNextAddress", [])
+            logs = onChainSmartContract.events.NextAddressReturned().processReceipt(receipt)
+            nextAddress = logs[0]['args']['nextAddress']
+            web3_c = Web3(HTTPProvider(nextAddress))
+            if web3_c.isConnected():
+                print("Connected to " + nextAddress)
+                customSmartContract = web3_c.eth.contract(abi=smartContractAbi, bytecode=smartContractBytecode)
+                deploy(web3_c, customSmartContract, name)
+                write(web3_1, onChainSmartContract, 'addContract', [name, str(nextAddress), str(smartContractAbi)])
+                result = read(onChainSmartContract, 'getContract', [name])
+                print("Result: " + str(result))
+            else:
+                print("Not connected to " + nextAddress)
+
             self.destroy()
         
     def cancel_button_click(self):
