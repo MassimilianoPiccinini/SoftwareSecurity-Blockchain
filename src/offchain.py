@@ -62,7 +62,7 @@ def deploy(w3: Web3, contract: Contract, name: str):
         "from": w3.eth.accounts[0],
         "gas": w3.toHex(6721975),
         "gasPrice": w3.toWei('0', 'gwei'),
-        "nonce": w3.eth.getTransactionCount(w3.eth.accounts[0]),
+        "nonce": w3.eth.get_transaction_count(w3.eth.accounts[0]),
         "data": contract.bytecode
     }
     signedTransaction = w3.eth.account.signTransaction(
@@ -103,7 +103,7 @@ def write(w3: Web3, contract: Contract, function_name: str, args: any):
         "data": contract.encodeABI(fn_name=function_name, args=args),
         "gas": w3.toHex(6721975),
         "gasPrice": w3.toWei('0', 'gwei'),
-        "nonce": w3.eth.getTransactionCount(w3.eth.accounts[0])
+        "nonce": w3.eth.get_transaction_count(w3.eth.accounts[0])
     }
     signedTransaction = w3.eth.account.signTransaction(
         new_transaction, "0x4f11e05b6908439852b5ea7c97da15738dfadd111b3fc89d4c812423fa929b45")
@@ -148,7 +148,7 @@ def loadOnChainManager():
     global onChainSmartContract
     onChainSmartContract = web3_1.eth.contract(
         abi=smartContractAbi, bytecode=smartContractBytecode)
-    count = web3_1.eth.getTransactionCount(web3_1.eth.accounts[0])
+    count = web3_1.eth.get_transaction_count(web3_1.eth.accounts[0])
     sc = read_storage("onchainsc")
     if sc is None:
         onChainSmartContract = deploy(
@@ -195,7 +195,7 @@ class Loader(tk.Frame):
 
     def run_script(self):
         current_dir = os.path.dirname(os.path.abspath(__file__))
-        command = ['bash', os.path.join(current_dir, "init.sh")]
+        command = ['bash', os.path.join(current_dir, "\\init.sh")]
         process = subprocess.Popen(
             command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
         while True:
