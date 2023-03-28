@@ -67,16 +67,16 @@ contract OnChainManager {
 
         uint8 counter = getCounter();
 
-        if (counter == 0) {
+        if (_counter == 0) {
             nextAddress = _address1;
-        } else if (counter == 1) {
+        } else if (_counter == 1) {
             nextAddress = _address2;
-        } else if (counter == 2) {
+        } else if (_counter == 2) {
             nextAddress = _address3;
         }
 
         setCounter(counter);
 
-        return (nextAddress, counter);
+        return (nextAddress, _counter);
     }
 }

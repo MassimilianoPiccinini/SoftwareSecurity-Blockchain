@@ -96,7 +96,9 @@ def write(w3: Web3, contract: Contract, function_name: str, args: any):
     }
     signedTransaction = w3.eth.account.signTransaction(new_transaction, "0x4f11e05b6908439852b5ea7c97da15738dfadd111b3fc89d4c812423fa929b45")
     transaction_hash = w3.eth.sendRawTransaction(signedTransaction.rawTransaction)
-    w3.eth.waitForTransactionReceipt(transaction_hash)
+    receipt = w3.eth.waitForTransactionReceipt(transaction_hash)
+    print(receipt.logs[0])
+    onChainSmartContract.events.MyEvent().processReceipt(receipt)
 
 def init_web3():
     global web3_1
@@ -288,7 +290,7 @@ class SolidityPage(tk.Toplevel):
             smartContractBytecode = smartContractInterface['bin']
             smartContractAbi = smartContractInterface['abi']
             # print(onChainSmartContract.address, onChainSmartContract.abi, onChainSmartContract.bytecode)
-            result = read(onChainSmartContract, "getAddress1", [])
+            '''result = read(onChainSmartContract, "getAddress1", [])
             print("Result: " + str(result))
             result = read(onChainSmartContract, "getAddress2", [])
             print("Result: " + str(result))
@@ -296,9 +298,19 @@ class SolidityPage(tk.Toplevel):
             print("Result: " + str(result))
             result = read(onChainSmartContract, "getNextAddress", [])
             print("Result: " + str(result))
-            
             result = read(onChainSmartContract, "getNextAddress", [])
-            print("Result: " + str(result))
+            print("Result: " + str(result))'''
+            result = read(onChainSmartContract, "getCounter", [])
+            print("Get Counter Result: " + str(result))
+            #result = write(web3_1, onChainSmartContract, "setCounter", [result])
+            result = write(web3_1, onChainSmartContract, "getNextAddress", [])
+            print("Get Next Address Result: " + str(result))
+            result = read(onChainSmartContract, "getCounter", [])
+            print("Get Counter Result: " + str(result))
+            result = write(web3_1, onChainSmartContract, "getNextAddress", [])
+            print("Get Next Address Result: " + str(result))
+            result = read(onChainSmartContract, "getCounter", [])
+            print("Get Counter Result: " + str(result))
             #smartContract = web3_1.eth.contract(abi=smartContractAbi, bytecode=smartContractBytecode)
             self.destroy()
         
