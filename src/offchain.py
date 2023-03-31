@@ -28,13 +28,15 @@ web3_4 = None
 
 def start_blockchains():
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    subprocess.call(['bash', os.path.join(current_dir, "//init.sh")])
+    subprocess.call(['bash', os.path.join(current_dir, "init.sh")])
 
 # read file content
 
 
 def get_sc(filename):
     current_dir = os.path.dirname(os.path.abspath(__file__))
+    print(current_dir)
+    print(os.path.join(current_dir, filename))
     with open(os.path.join(current_dir, filename), 'r') as file:
         text = file.read()
     return text
@@ -44,7 +46,7 @@ def get_sc(filename):
 
 def update_storage(map):
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    filename = os.path.join(current_dir, '//onchaindata.json')
+    filename = os.path.join(current_dir, 'onchaindata.json')
     try:
         with open(filename, 'r') as file:
             maps = json.load(file)
@@ -59,7 +61,7 @@ def update_storage(map):
 
 def read_storage(name: str):
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    filename = os.path.join(current_dir, '//onchaindata.json')
+    filename = os.path.join(current_dir, 'onchaindata.json')
     with open(filename, 'r') as file:
         maps = json.load(file)
     for map_data in maps:
@@ -154,7 +156,7 @@ def init_web3():
 
 def loadOnChainManager():
     compiledSmartContract = compile_source(
-        get_sc("//onchainmanager.sol"), output_values=['abi', 'bin'])
+        get_sc("onchainmanager.sol"), output_values=['abi', 'bin'])
     _, smartContractInterface = compiledSmartContract.popitem()
     smartContractBytecode = smartContractInterface['bin']
     smartContractAbi = smartContractInterface['abi']
@@ -162,7 +164,7 @@ def loadOnChainManager():
     onChainSmartContract = web3_1.eth.contract(
         abi=smartContractAbi, bytecode=smartContractBytecode)
     count = web3_1.eth.get_transaction_count(web3_1.eth.accounts[0])
-    sc = read_storage("//onchainsc")
+    sc = read_storage("onchainsc")
     if sc is None:
         onChainSmartContract = deploy(
             web3_1, onChainSmartContract, 'onchainsc')
@@ -209,13 +211,13 @@ class Loader(tk.Frame):
     def run_script(self):
         current_dir = os.path.dirname(os.path.abspath(__file__))
 
-        print(current_dir)
-       # dir = os.path.join(current_dir, "init.sh")
+       # print(current_dir)
+        dir = os.path.join(current_dir, "init.sh")
 
-        command = ['bash', './init.sh']
-
-        process = subprocess.Popen(
-            command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+        command = ['bash', 'init.sh']
+        process = subprocess.run([dir], shell=True)
+        # process = subprocess.Popen(
+        #     command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
         while True:
             output = process.stdout.readline()
             if not output and process.poll() is not None:
