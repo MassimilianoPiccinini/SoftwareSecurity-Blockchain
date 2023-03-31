@@ -1,18 +1,21 @@
-import json
-import time
-import threading
-from PIL import Image, ImageTk
-import tkinter as tk
-import os
-import subprocess
-from solcx import compile_source
-from tkinter import filedialog
-import web3
-from web3 import Web3
-from web3.contract import Contract
-from web3.providers.rpc import HTTPProvider
 from solcx import install_solc
-install_solc(version='latest')
+from web3.providers.rpc import HTTPProvider
+from web3.contract import Contract
+from web3 import Web3
+import web3
+from tkinter import filedialog
+from solcx import compile_source
+import subprocess
+import os
+import tkinter as tk
+from PIL import Image, ImageTk
+import threading
+import time
+import json
+import solcx
+
+solcx.install_solc(version='latest')
+
 
 onChainSmartContract = None
 web3_1 = None
@@ -20,10 +23,14 @@ web3_2 = None
 web3_3 = None
 web3_4 = None
 
+# start blockchain calling init.sh
+
 
 def start_blockchains():
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    subprocess.call(['bash', os.path.join(current_dir, "init.sh")])
+    subprocess.call(['bash', os.path.join(current_dir, "//init.sh")])
+
+# read file content
 
 
 def get_sc(filename):
@@ -32,10 +39,12 @@ def get_sc(filename):
         text = file.read()
     return text
 
+# open onchainmanager.json and append content of blockchain
+
 
 def update_storage(map):
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    filename = os.path.join(current_dir, 'onchaindata.json')
+    filename = os.path.join(current_dir, '//onchaindata.json')
     try:
         with open(filename, 'r') as file:
             maps = json.load(file)
@@ -45,16 +54,20 @@ def update_storage(map):
     with open(filename, 'w') as file:
         json.dump(maps, file)
 
+# read storage in onchaindata.json (getter)
+
 
 def read_storage(name: str):
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    filename = os.path.join(current_dir, 'onchaindata.json')
+    filename = os.path.join(current_dir, '//onchaindata.json')
     with open(filename, 'r') as file:
         maps = json.load(file)
     for map_data in maps:
         if map_data['name'] == name:
             return map_data
     return None
+
+# deploy smart contract
 
 
 def deploy(w3: Web3, contract: Contract, name: str):
@@ -141,7 +154,7 @@ def init_web3():
 
 def loadOnChainManager():
     compiledSmartContract = compile_source(
-        get_sc("onchainmanager.sol"), output_values=['abi', 'bin'])
+        get_sc("//onchainmanager.sol"), output_values=['abi', 'bin'])
     _, smartContractInterface = compiledSmartContract.popitem()
     smartContractBytecode = smartContractInterface['bin']
     smartContractAbi = smartContractInterface['abi']
@@ -149,7 +162,7 @@ def loadOnChainManager():
     onChainSmartContract = web3_1.eth.contract(
         abi=smartContractAbi, bytecode=smartContractBytecode)
     count = web3_1.eth.get_transaction_count(web3_1.eth.accounts[0])
-    sc = read_storage("onchainsc")
+    sc = read_storage("//onchainsc")
     if sc is None:
         onChainSmartContract = deploy(
             web3_1, onChainSmartContract, 'onchainsc')
@@ -195,7 +208,12 @@ class Loader(tk.Frame):
 
     def run_script(self):
         current_dir = os.path.dirname(os.path.abspath(__file__))
-        command = ['bash', os.path.join(current_dir, "\\init.sh")]
+
+        print(current_dir)
+       # dir = os.path.join(current_dir, "init.sh")
+
+        command = ['bash', './init.sh']
+
         process = subprocess.Popen(
             command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
         while True:
@@ -260,13 +278,13 @@ class HomePage(tk.Toplevel):
             frame3, text="Chiama un\nmetodo di uno\nSmart Contract\nesistente", font=("Arial", 13))
         label3.pack(fill=tk.BOTH, expand=1)
 
-    def get_folder_path():
-        while True:
-            folder_path = input("Please enter the path of the folder: ")
-            if os.path.isdir(folder_path):
-                return folder_path
-            else:
-                print("Invalid folder path. Please try again.")
+    # def get_folder_path():
+    #     while True:
+    #         folder_path = input("Please enter the path of the folder: ")
+    #         if os.path.isdir(folder_path):
+    #             return folder_path
+    #         else:
+    #             print("Invalid folder path. Please try again.")
 
     def button1_clicked(self):
         soliditypage = SolidityPage(self.master)
