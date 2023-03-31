@@ -231,10 +231,10 @@ class HomePage(tk.Toplevel):
         soliditypage = SolidityPage(self.master)
 
     def button2_clicked(self):
-        print("Button 2 clicked")
+        abibytecodepage = ABIBytecodePage(self.master)
 
     def button3_clicked(self):
-        print("Button 3 clicked")
+        callmethodpage = MethodsPage(self.master)
 
 class SolidityPage(tk.Toplevel):
     def __init__(self, parent):
@@ -290,8 +290,8 @@ class SolidityPage(tk.Toplevel):
             if web3_c.isConnected():
                 print("Connected to " + nextAddress)
                 customSmartContract = web3_c.eth.contract(abi=smartContractAbi, bytecode=smartContractBytecode)
-                deploy(web3_c, customSmartContract, name)
-                write(web3_1, onChainSmartContract, 'addContract', [name, str(nextAddress), str(smartContractAbi)])
+                customSmartContract = deploy(web3_c, customSmartContract, name)
+                write(web3_1, onChainSmartContract, 'addContract', [name, str(nextAddress), str(customSmartContract.address), str(smartContractAbi)])
                 result = read(onChainSmartContract, 'getContract', [name])
                 print("Result: " + str(result))
             else:
@@ -301,6 +301,183 @@ class SolidityPage(tk.Toplevel):
         
     def cancel_button_click(self):
         self.destroy()
+
+class ABIBytecodePage(tk.Toplevel):
+    def __init__(self, parent):
+        super().__init__(parent)
+        screen_width = root.winfo_screenwidth()
+        screen_height = root.winfo_screenheight()
+        self.geometry(f"{screen_width//2}x{screen_height//2}+{screen_width//4}+{screen_height//4}")
+        self.title("Deploy da ABI e Bytecode")
+        self.name_label = tk.Label(self, text="Name:")
+        self.name_label.pack()
+        
+        self.name_entry = tk.Entry(self)
+        self.name_entry.pack()
+        
+        self.abi_label = tk.Label(self, text="ABI:")
+        self.abi_label.pack()
+        
+        self.abi_label = tk.Entry(self)
+        self.abi_label.pack()
+        
+        self.bytecode_label = tk.Label(self, text="Bytecode:")
+        self.bytecode_label.pack()
+        
+        self.bytecode_label = tk.Entry(self)
+        self.bytecode_label.pack()
+        
+        self.ok_button = tk.Button(self, text="OK", command=self.ok_button_click)
+        self.ok_button.pack(side=tk.LEFT)
+        
+        self.cancel_button = tk.Button(self, text="Cancel", command=self.cancel_button_click)
+        self.cancel_button.pack(side=tk.LEFT)
+        
+    def ok_button_click(self):
+        name = self.name_entry.get()
+        smartContractAbi = self.abi_label.get()
+        smartContractBytecode = self.bytecode_label.get()
+        receipt = write(web3_1, onChainSmartContract, "getNextAddress", [])
+        logs = onChainSmartContract.events.NextAddressReturned().processReceipt(receipt)
+        nextAddress = logs[0]['args']['nextAddress']
+        web3_c = Web3(HTTPProvider(nextAddress))
+        if web3_c.isConnected():
+            print("Connected to " + nextAddress)
+            customSmartContract = web3_c.eth.contract(abi=smartContractAbi, bytecode=smartContractBytecode)
+            deploy(web3_c, customSmartContract, name)
+            write(web3_1, onChainSmartContract, 'addContract', [name, str(nextAddress), str(customSmartContract.address), str(smartContractAbi)])
+            result = read(onChainSmartContract, 'getContract', [name])
+            print("Result: " + str(result))
+        else:
+            print("Not connected to " + nextAddress)
+
+        self.destroy()
+        
+    def cancel_button_click(self):
+        self.destroy()
+
+class MethodsPage(tk.Toplevel):
+    def __init__(self, parent):
+        super().__init__(parent)
+        screen_width = root.winfo_screenwidth()
+        screen_height = root.winfo_screenheight()
+        self.geometry(f"{screen_width//2}x{screen_height//2}+{screen_width//4}+{screen_height//4}")
+        self.title("Chiama metodo")
+        self.name_label = tk.Label(self, text="Name of the smart contract:")
+        self.name_label.pack()
+        
+        self.name_entry = tk.Entry(self)
+        self.name_entry.pack()
+        
+        self.function_label = tk.Label(self, text="Function name:")
+        self.function_label.pack()
+        
+        self.function_label = tk.Entry(self)
+        self.function_label.pack()
+
+        self.selected_option = tk.IntVar()
+        self.selected_option.set(0)
+
+        self.option1 = tk.Radiobutton(self, text='Lettura', variable=self.selected_option, value=0)
+        self.option1.pack(padx=10)
+        self.option2 = tk.Radiobutton(self, text='Scrittura', variable=self.selected_option, value=1)
+        self.option2.pack(padx=10)
+        
+        self.arg1_label = tk.Label(self, text="Arg 1:")
+        self.arg1_label.pack()
+        
+        self.arg1_label = tk.Entry(self)
+        self.arg1_label.pack()
+
+        self.arg2_label = tk.Label(self, text="Arg 2:")
+        self.arg2_label.pack()
+        
+        self.arg2_label = tk.Entry(self)
+        self.arg2_label.pack()
+
+        self.arg3_label = tk.Label(self, text="Arg 3:")
+        self.arg3_label.pack()
+        
+        self.arg3_label = tk.Entry(self)
+        self.arg3_label.pack()
+        
+        self.ok_button = tk.Button(self, text="OK", command=self.ok_button_click)
+        self.ok_button.pack(side=tk.LEFT)
+        
+        self.cancel_button = tk.Button(self, text="Cancel", command=self.cancel_button_click)
+        self.cancel_button.pack(side=tk.LEFT)
+        
+    def ok_button_click(self):
+        selected_option = self.selected_option.get()
+        name = self.name_entry.get()
+        function = self.function_label.get()
+        arg1 = self.arg1_label.get()
+        arg2 = self.arg2_label.get()
+        arg3 = self.arg3_label.get()
+        data = read(onChainSmartContract, "getContract", [name])
+        blockChainAddress = data[0]
+        address = data[1]
+        abi = data[2].replace("'", '"').replace('False', 'false').replace('True', 'true')
+        web3_c = Web3(HTTPProvider(blockChainAddress))
+        if web3_c.isConnected():
+            print("Connected to " + blockChainAddress)
+            customSmartContract = web3_c.eth.contract(address=address, abi=abi)
+            if arg1 and arg2 and arg3:
+                if selected_option == 0:
+                    result = read(customSmartContract, function, [arg1, arg2, arg3])
+                else:
+                    write(web3_c, customSmartContract, function, [arg1, arg2, arg3])
+            elif arg1 and arg2:
+                if selected_option == 0:
+                    result = read(customSmartContract, function, [arg1, arg2])
+                else:
+                    write(web3_c, customSmartContract, function, [arg1, arg2])
+            elif arg1:
+                if selected_option == 0:
+                    result = read(customSmartContract, function, [arg1])
+                else:
+                    write(web3_c, customSmartContract, function, [arg1])
+            else:
+                if selected_option == 0:
+                    result = read(customSmartContract, function, [])
+                else:
+                    write(web3_c, customSmartContract, function, [])
+        else:
+            print("Not connected to " + blockChainAddress)
+        if selected_option == 0:
+            self.show_toast('Dati ottenuti correttamente', str(result))
+        else:
+            self.show_toast('Dati scritti correttamente', '')
+        self.destroy()
+        
+    def cancel_button_click(self):
+        self.destroy()
+
+    def show_toast(self, title, description):
+        window = tk.Toplevel()
+        window.overrideredirect(True)
+        window.attributes("-topmost", True)
+        screen_width = root.winfo_screenwidth()
+        screen_height = root.winfo_screenheight()
+        window.geometry(f"{500}x{100}+{screen_width//2-50}+{screen_height//2-50}")
+
+        # create a frame for the toast message
+        frame = tk.Frame(window, bg='white', bd=1, relief=tk.RAISED)
+        frame.pack(side=tk.BOTTOM, padx=10, pady=10)
+
+        # create a label for the title and add it to the frame
+        title_label = tk.Label(frame, text=title, font=('Arial', 14, 'bold'), fg='black', bg='white')
+        title_label.pack(padx=10, pady=5)
+
+        # create a label for the description and add it to the frame
+        desc_label = tk.Label(frame, text=description, font=('Arial', 12), fg='gray', bg='white')
+        desc_label.pack(padx=10, pady=5)
+
+        # function to destroy the window after a short delay
+        def destroy_window():
+            window.after(3000, window.destroy)
+        
+        window.after(3000, destroy_window)
 
 root = tk.Tk()
 app = Loader(root)
