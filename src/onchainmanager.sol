@@ -5,9 +5,12 @@ pragma solidity ^0.8.0;
 contract OnChainManager {
     
     struct Contract {
+        string myBlockchainAddress;
         string myAddress;
         string myAbi;
     }
+
+    event NextAddressReturned(string nextAddress, uint8 counter);
     
     mapping(string => Contract) private _contracts;
     string private _address1;
@@ -39,14 +42,14 @@ contract OnChainManager {
         return _address3;
     }
     
-    function addContract(string memory name, string memory myAddress, string memory myAbi) public {
-        Contract memory newContract = Contract(myAddress, myAbi);
+    function addContract(string memory name, string memory myBlockchainAddress, string memory myAddress, string memory myAbi) public {
+        Contract memory newContract = Contract(myBlockchainAddress, myAddress, myAbi);
         _contracts[name] = newContract;
     }
     
-    function getContract(string memory name) public view returns (string memory, string memory) {
+    function getContract(string memory name) public view returns (string memory, string memory, string memory) {
         Contract memory contract_ = _contracts[name];
-        return (contract_.myAddress, contract_.myAbi);
+        return (contract_.myBlockchainAddress, contract_.myAddress, contract_.myAbi);
     }
     
     function deleteContract(string memory name) public {
@@ -54,8 +57,7 @@ contract OnChainManager {
     }
 
     function setCounter(uint8 counter) public {
-        //_counter = (counter + 1) % 3;
-        _counter = counter + 1;
+        _counter = (counter + 1) % 3;
     }
     
     function getCounter() public view returns (uint8) {
@@ -76,6 +78,8 @@ contract OnChainManager {
         }
 
         setCounter(counter);
+
+        emit NextAddressReturned(nextAddress, counter);
 
         return (nextAddress, counter);
     }

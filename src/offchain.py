@@ -95,19 +95,16 @@ def deploy(w3: Web3, contract: Contract, name: str):
     update_storage(new_map)
     return contract
 
-
-def read(contract: Contract, function_name: str, args: any):
-    if len(list(args)) == 0:
+def read(contract: Contract, function_name: str, args: list):
+    if len(args) == 0:
         # result = contract.functions.askForDeploySmartContract().call()
         result = contract.functions[function_name]().call()
-    elif len(list(args)) == 1:
+    elif len(args) == 1:
         result = contract.functions[function_name](args[0]).call()
-    elif len(list(args)) == 2:
+    elif len(args) == 2:
         result = contract.functions[function_name](args[0], args[1]).call()
     else:
-        result = contract.functions[function_name](
-            args[0], args[1], args[2]).call()
-    # print("Result of contract method call:", result)
+        result = contract.functions[function_name](args[0], args[1], args[2]).call()
     return result
 
 
@@ -120,11 +117,10 @@ def write(w3: Web3, contract: Contract, function_name: str, args: any):
         "gasPrice": w3.toWei('0', 'gwei'),
         "nonce": w3.eth.get_transaction_count(w3.eth.accounts[0])
     }
-    signedTransaction = w3.eth.account.signTransaction(
-        new_transaction, "0x4f11e05b6908439852b5ea7c97da15738dfadd111b3fc89d4c812423fa929b45")
-    transaction_hash = w3.eth.sendRawTransaction(
-        signedTransaction.rawTransaction)
-    w3.eth.waitForTransactionReceipt(transaction_hash)
+    signedTransaction = w3.eth.account.signTransaction(new_transaction, "0x4f11e05b6908439852b5ea7c97da15738dfadd111b3fc89d4c812423fa929b45")
+    transaction_hash = w3.eth.sendRawTransaction(signedTransaction.rawTransaction)
+    receipt = w3.eth.waitForTransactionReceipt(transaction_hash)
+    return receipt
 
 
 def init_web3():
@@ -166,12 +162,8 @@ def loadOnChainManager():
     count = web3_1.eth.get_transaction_count(web3_1.eth.accounts[0])
     sc = read_storage("onchainsc")
     if sc is None:
-        onChainSmartContract = deploy(
-            web3_1, onChainSmartContract, 'onchainsc')
-
-        my_contract = web3_1.eth.contract(
-            address=onChainSmartContract.address, abi=onChainSmartContract.abi)
-        print("1: " + read(my_contract, "getAddress1", []))
+        onChainSmartContract = deploy(web3_1, onChainSmartContract, 'onchainsc')
+        # my_contract = web3_1.eth.contract(address=onChainSmartContract.address, abi=onChainSmartContract.abi)
     else:
         onChainSmartContract = web3_1.eth.contract(
             address=sc["address"], abi=smartContractAbi, bytecode=smartContractBytecode)
@@ -182,9 +174,6 @@ def loadOnChainManager():
           'setAddress2', ["http://127.0.0.1:8547"])
     write(web3_1, onChainSmartContract,
           'setAddress3', ["http://127.0.0.1:8548"])
-
-    print("2: " + read(onChainSmartContract, "getAddress1", []))
-
 
 class Loader(tk.Frame):
     def __init__(self, parent):
@@ -259,15 +248,13 @@ class HomePage(tk.Toplevel):
             frame1, text="Carica il tuo\nfile in solidity\nin cui è scritto\nlo Smart Contract", font=("Arial", 13))
         label1.pack(fill=tk.BOTH, expand=1)
 
-        button2 = tk.Button(self, image=button2_photo, text="Deploy da address e ABI",
-                            compound=tk.TOP, font=("Arial", 12), command=self.button2_clicked)
+        button2 = tk.Button(self, image=button2_photo, text="Deploy da ABI e Bytecode", compound=tk.TOP, font=("Arial", 12), command=self.button2_clicked)
         button2.image = button2_photo
         button2.grid(row=1, column=1, padx=0, pady=10)
         frame2 = tk.Frame(self, height=100, width=100)
         frame2.pack_propagate(0)
         frame2.grid(row=2, column=1, padx=0, pady=10)
-        label2 = tk.Label(
-            frame2, text="Carica il tuo\nSmart Contract\nscrivendo l'ABI\ne l'indirizzo", font=("Arial", 13))
+        label2 = tk.Label(frame2, text="Carica il tuo\nSmart Contract\nscrivendo l'ABI\ne il Bytecode", font=("Arial", 13))
         label2.pack(fill=tk.BOTH, expand=1)
 
         button3 = tk.Button(self, image=button3_photo, text="Chiama metodo",
@@ -293,10 +280,10 @@ class HomePage(tk.Toplevel):
         soliditypage = SolidityPage(self.master)
 
     def button2_clicked(self):
-        print("Button 2 clicked")
+        abibytecodepage = ABIBytecodePage(self.master)
 
     def button3_clicked(self):
-        print("Button 3 clicked")
+        callmethodpage = MethodsPage(self.master)
 
 
 class SolidityPage(tk.Toplevel):
@@ -352,24 +339,201 @@ class SolidityPage(tk.Toplevel):
             _, smartContractInterface = compiledSmartContract.popitem()
             smartContractBytecode = smartContractInterface['bin']
             smartContractAbi = smartContractInterface['abi']
-            # print(onChainSmartContract.address, onChainSmartContract.abi, onChainSmartContract.bytecode)
-            result = read(onChainSmartContract, "getAddress1", [])
-            print("Result: " + str(result))
-            result = read(onChainSmartContract, "getAddress2", [])
-            print("Result: " + str(result))
-            result = read(onChainSmartContract, "getAddress3", [])
-            print("Result: " + str(result))
-            result = read(onChainSmartContract, "getNextAddress", [])
-            print("Result: " + str(result))
+            receipt = write(web3_1, onChainSmartContract, "getNextAddress", [])
+            logs = onChainSmartContract.events.NextAddressReturned().processReceipt(receipt)
+            nextAddress = logs[0]['args']['nextAddress']
+            web3_c = Web3(HTTPProvider(nextAddress))
+            if web3_c.isConnected():
+                print("Connected to " + nextAddress)
+                customSmartContract = web3_c.eth.contract(abi=smartContractAbi, bytecode=smartContractBytecode)
+                customSmartContract = deploy(web3_c, customSmartContract, name)
+                write(web3_1, onChainSmartContract, 'addContract', [name, str(nextAddress), str(customSmartContract.address), str(smartContractAbi)])
+                result = read(onChainSmartContract, 'getContract', [name])
+                print("Result: " + str(result))
+            else:
+                print("Not connected to " + nextAddress)
 
-            result = read(onChainSmartContract, "getNextAddress", [])
-            print("Result: " + str(result))
-            # smartContract = web3_1.eth.contract(abi=smartContractAbi, bytecode=smartContractBytecode)
             self.destroy()
 
     def cancel_button_click(self):
         self.destroy()
 
+class ABIBytecodePage(tk.Toplevel):
+    def __init__(self, parent):
+        super().__init__(parent)
+        screen_width = root.winfo_screenwidth()
+        screen_height = root.winfo_screenheight()
+        self.geometry(f"{screen_width//2}x{screen_height//2}+{screen_width//4}+{screen_height//4}")
+        self.title("Deploy da ABI e Bytecode")
+        self.name_label = tk.Label(self, text="Name:")
+        self.name_label.pack()
+        
+        self.name_entry = tk.Entry(self)
+        self.name_entry.pack()
+        
+        self.abi_label = tk.Label(self, text="ABI:")
+        self.abi_label.pack()
+        
+        self.abi_label = tk.Entry(self)
+        self.abi_label.pack()
+        
+        self.bytecode_label = tk.Label(self, text="Bytecode:")
+        self.bytecode_label.pack()
+        
+        self.bytecode_label = tk.Entry(self)
+        self.bytecode_label.pack()
+        
+        self.ok_button = tk.Button(self, text="OK", command=self.ok_button_click)
+        self.ok_button.pack(side=tk.LEFT)
+        
+        self.cancel_button = tk.Button(self, text="Cancel", command=self.cancel_button_click)
+        self.cancel_button.pack(side=tk.LEFT)
+        
+    def ok_button_click(self):
+        name = self.name_entry.get()
+        smartContractAbi = self.abi_label.get()
+        smartContractBytecode = self.bytecode_label.get()
+        receipt = write(web3_1, onChainSmartContract, "getNextAddress", [])
+        logs = onChainSmartContract.events.NextAddressReturned().processReceipt(receipt)
+        nextAddress = logs[0]['args']['nextAddress']
+        web3_c = Web3(HTTPProvider(nextAddress))
+        if web3_c.isConnected():
+            print("Connected to " + nextAddress)
+            customSmartContract = web3_c.eth.contract(abi=smartContractAbi, bytecode=smartContractBytecode)
+            deploy(web3_c, customSmartContract, name)
+            write(web3_1, onChainSmartContract, 'addContract', [name, str(nextAddress), str(customSmartContract.address), str(smartContractAbi)])
+            result = read(onChainSmartContract, 'getContract', [name])
+            print("Result: " + str(result))
+        else:
+            print("Not connected to " + nextAddress)
+
+        self.destroy()
+        
+    def cancel_button_click(self):
+        self.destroy()
+
+class MethodsPage(tk.Toplevel):
+    def __init__(self, parent):
+        super().__init__(parent)
+        screen_width = root.winfo_screenwidth()
+        screen_height = root.winfo_screenheight()
+        self.geometry(f"{screen_width//2}x{screen_height//2}+{screen_width//4}+{screen_height//4}")
+        self.title("Chiama metodo")
+        self.name_label = tk.Label(self, text="Name of the smart contract:")
+        self.name_label.pack()
+        
+        self.name_entry = tk.Entry(self)
+        self.name_entry.pack()
+        
+        self.function_label = tk.Label(self, text="Function name:")
+        self.function_label.pack()
+        
+        self.function_label = tk.Entry(self)
+        self.function_label.pack()
+
+        self.selected_option = tk.IntVar()
+        self.selected_option.set(0)
+
+        self.option1 = tk.Radiobutton(self, text='Lettura', variable=self.selected_option, value=0)
+        self.option1.pack(padx=10)
+        self.option2 = tk.Radiobutton(self, text='Scrittura', variable=self.selected_option, value=1)
+        self.option2.pack(padx=10)
+        
+        self.arg1_label = tk.Label(self, text="Arg 1:")
+        self.arg1_label.pack()
+        
+        self.arg1_label = tk.Entry(self)
+        self.arg1_label.pack()
+
+        self.arg2_label = tk.Label(self, text="Arg 2:")
+        self.arg2_label.pack()
+        
+        self.arg2_label = tk.Entry(self)
+        self.arg2_label.pack()
+
+        self.arg3_label = tk.Label(self, text="Arg 3:")
+        self.arg3_label.pack()
+        
+        self.arg3_label = tk.Entry(self)
+        self.arg3_label.pack()
+        
+        self.ok_button = tk.Button(self, text="OK", command=self.ok_button_click)
+        self.ok_button.pack(side=tk.LEFT)
+        
+        self.cancel_button = tk.Button(self, text="Cancel", command=self.cancel_button_click)
+        self.cancel_button.pack(side=tk.LEFT)
+        
+    def ok_button_click(self):
+        selected_option = self.selected_option.get()
+        name = self.name_entry.get()
+        function = self.function_label.get()
+        arg1 = self.arg1_label.get()
+        arg2 = self.arg2_label.get()
+        arg3 = self.arg3_label.get()
+        data = read(onChainSmartContract, "getContract", [name])
+        blockChainAddress = data[0]
+        address = data[1]
+        abi = data[2].replace("'", '"').replace('False', 'false').replace('True', 'true')
+        web3_c = Web3(HTTPProvider(blockChainAddress))
+        if web3_c.isConnected():
+            print("Connected to " + blockChainAddress)
+            customSmartContract = web3_c.eth.contract(address=address, abi=abi)
+            if arg1 and arg2 and arg3:
+                if selected_option == 0:
+                    result = read(customSmartContract, function, [arg1, arg2, arg3])
+                else:
+                    write(web3_c, customSmartContract, function, [arg1, arg2, arg3])
+            elif arg1 and arg2:
+                if selected_option == 0:
+                    result = read(customSmartContract, function, [arg1, arg2])
+                else:
+                    write(web3_c, customSmartContract, function, [arg1, arg2])
+            elif arg1:
+                if selected_option == 0:
+                    result = read(customSmartContract, function, [arg1])
+                else:
+                    write(web3_c, customSmartContract, function, [arg1])
+            else:
+                if selected_option == 0:
+                    result = read(customSmartContract, function, [])
+                else:
+                    write(web3_c, customSmartContract, function, [])
+        else:
+            print("Not connected to " + blockChainAddress)
+        if selected_option == 0:
+            self.show_toast('Dati ottenuti correttamente', str(result))
+        else:
+            self.show_toast('Dati scritti correttamente', '')
+        self.destroy()
+        
+    def cancel_button_click(self):
+        self.destroy()
+
+    def show_toast(self, title, description):
+        window = tk.Toplevel()
+        window.overrideredirect(True)
+        window.attributes("-topmost", True)
+        screen_width = root.winfo_screenwidth()
+        screen_height = root.winfo_screenheight()
+        window.geometry(f"{500}x{100}+{screen_width//2-50}+{screen_height//2-50}")
+
+        # create a frame for the toast message
+        frame = tk.Frame(window, bg='white', bd=1, relief=tk.RAISED)
+        frame.pack(side=tk.BOTTOM, padx=10, pady=10)
+
+        # create a label for the title and add it to the frame
+        title_label = tk.Label(frame, text=title, font=('Arial', 14, 'bold'), fg='black', bg='white')
+        title_label.pack(padx=10, pady=5)
+
+        # create a label for the description and add it to the frame
+        desc_label = tk.Label(frame, text=description, font=('Arial', 12), fg='gray', bg='white')
+        desc_label.pack(padx=10, pady=5)
+
+        # function to destroy the window after a short delay
+        def destroy_window():
+            window.after(3000, window.destroy)
+        
+        window.after(3000, destroy_window)
 
 root = tk.Tk()
 app = Loader(root)
