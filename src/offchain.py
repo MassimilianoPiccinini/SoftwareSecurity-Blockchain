@@ -214,8 +214,9 @@ class Loader(tk.Frame):
        # print(current_dir)
         dir = os.path.join(current_dir, "init.sh")
 
-        command = ['bash', 'init.sh']
-        process = subprocess.run([dir], shell=True)
+       # command = ['bash', 'init.sh']
+        process = subprocess.Popen(
+            [dir], stdout=subprocess.PIPE, shell=True, stderr=subprocess.PIPE, universal_newlines=True)
         # process = subprocess.Popen(
         #     command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
         while True:
