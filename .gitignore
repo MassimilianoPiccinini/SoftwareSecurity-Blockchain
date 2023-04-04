@@ -6,3 +6,10 @@ Blockchain4
 configs
 network/3-nodes-quickstart
 netowork
+.DS_Store
+src/.DS_Store
+Src/node_modules/*
+src/.DS_Store
+src/.DS_Store
+src/package-lock.json
+src/package.json

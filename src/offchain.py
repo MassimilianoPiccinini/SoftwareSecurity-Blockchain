@@ -57,7 +57,7 @@ def deploy(w3: Web3, contract: Contract, name: str):
         "from": w3.eth.accounts[0],
         "gas": w3.toHex(6721975),
         "gasPrice": w3.toWei('0', 'gwei'),
-        "nonce": w3.eth.getTransactionCount(w3.eth.accounts[0]),
+        "nonce": w3.eth.get_transaction_count(w3.eth.accounts[0]),
         "data": contract.bytecode
     }
     signedTransaction = w3.eth.account.signTransaction(sm_transaction, "0x4f11e05b6908439852b5ea7c97da15738dfadd111b3fc89d4c812423fa929b45")
@@ -91,7 +91,7 @@ def write(w3: Web3, contract: Contract, function_name: str, args: any):
         "data": contract.encodeABI(fn_name=function_name, args=args),
         "gas": w3.toHex(6721975),
         "gasPrice": w3.toWei('0', 'gwei'),
-        "nonce": w3.eth.getTransactionCount(w3.eth.accounts[0])
+        "nonce": w3.eth.get_transaction_count(w3.eth.accounts[0])
     }
     signedTransaction = w3.eth.account.signTransaction(new_transaction, "0x4f11e05b6908439852b5ea7c97da15738dfadd111b3fc89d4c812423fa929b45")
     transaction_hash = w3.eth.sendRawTransaction(signedTransaction.rawTransaction)
@@ -104,22 +104,22 @@ def init_web3():
     global web3_3
     global web3_4
     web3_1 = Web3(HTTPProvider("http://127.0.0.1:8545"))
-    if web3_1.isConnected():
+    if web3_1.is_connected():
         print("Connected to http://127.0.0.1:8545")
     else:
         print("Not connected to http://127.0.0.1:8545")
     web3_2 = Web3(HTTPProvider("http://127.0.0.1:8546"))
-    if web3_2.isConnected():
+    if web3_2.is_connected():
         print("Connected to http://127.0.0.1:8546")
     else:
         print("Not connected to http://127.0.0.1:8546")
     web3_3 = Web3(HTTPProvider("http://127.0.0.1:8547"))
-    if web3_3.isConnected():
+    if web3_3.is_connected():
         print("Connected to http://127.0.0.1:8547")
     else:
         print("Not connected to http://127.0.0.1:8547")
     web3_4 = Web3(HTTPProvider("http://127.0.0.1:8548"))
-    if web3_4.isConnected():
+    if web3_4.is_connected():
         print("Connected to http://127.0.0.1:8548")
     else:
         print("Not connected to http://127.0.0.1:8548")
@@ -131,7 +131,7 @@ def loadOnChainManager():
     smartContractAbi = smartContractInterface['abi']
     global onChainSmartContract
     onChainSmartContract = web3_1.eth.contract(abi=smartContractAbi, bytecode=smartContractBytecode)
-    count = web3_1.eth.getTransactionCount(web3_1.eth.accounts[0])
+    count = web3_1.eth.get_transaction_count(web3_1.eth.accounts[0])
     sc = read_storage("onchainsc")
     if sc is None:
         onChainSmartContract = deploy(web3_1, onChainSmartContract, 'onchainsc')
@@ -287,7 +287,7 @@ class SolidityPage(tk.Toplevel):
             logs = onChainSmartContract.events.NextAddressReturned().processReceipt(receipt)
             nextAddress = logs[0]['args']['nextAddress']
             web3_c = Web3(HTTPProvider(nextAddress))
-            if web3_c.isConnected():
+            if web3_c.is_connected():
                 print("Connected to " + nextAddress)
                 customSmartContract = web3_c.eth.contract(abi=smartContractAbi, bytecode=smartContractBytecode)
                 customSmartContract = deploy(web3_c, customSmartContract, name)
@@ -341,7 +341,7 @@ class ABIBytecodePage(tk.Toplevel):
         logs = onChainSmartContract.events.NextAddressReturned().processReceipt(receipt)
         nextAddress = logs[0]['args']['nextAddress']
         web3_c = Web3(HTTPProvider(nextAddress))
-        if web3_c.isConnected():
+        if web3_c.is_connected():
             print("Connected to " + nextAddress)
             customSmartContract = web3_c.eth.contract(abi=smartContractAbi, bytecode=smartContractBytecode)
             deploy(web3_c, customSmartContract, name)
@@ -419,7 +419,7 @@ class MethodsPage(tk.Toplevel):
         address = data[1]
         abi = data[2].replace("'", '"').replace('False', 'false').replace('True', 'true')
         web3_c = Web3(HTTPProvider(blockChainAddress))
-        if web3_c.isConnected():
+        if web3_c.is_connected():
             print("Connected to " + blockChainAddress)
             customSmartContract = web3_c.eth.contract(address=address, abi=abi)
             if arg1 and arg2 and arg3:
