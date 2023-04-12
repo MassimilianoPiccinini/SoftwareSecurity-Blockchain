@@ -1,5 +1,4 @@
 from tkinter import filedialog
-import web3
 from web3 import Web3
 from web3.contract import Contract
 from web3.providers.rpc import HTTPProvider
@@ -11,7 +10,6 @@ import os
 import tkinter as tk
 from PIL import Image, ImageTk
 import threading
-import time
 import json
 
 onChainSmartContract = None
@@ -55,14 +53,14 @@ def read_storage(name: str):
 def deploy(w3: Web3, contract: Contract, name: str):
     sm_transaction = {
         "from": w3.eth.accounts[0],
-        "gas": w3.toHex(6721975),
-        "gasPrice": w3.toWei('0', 'gwei'),
+        "gas": w3.to_hex(6721975),
+        "gasPrice": w3.to_wei('0', 'gwei'),
         "nonce": w3.eth.get_transaction_count(w3.eth.accounts[0]),
         "data": contract.bytecode
     }
-    signedTransaction = w3.eth.account.signTransaction(sm_transaction, "0x4f11e05b6908439852b5ea7c97da15738dfadd111b3fc89d4c812423fa929b45")
-    transaction_hash = w3.eth.sendRawTransaction(signedTransaction.rawTransaction)
-    tx_receipt = w3.eth.waitForTransactionReceipt(transaction_hash)
+    signedTransaction = w3.eth.account.sign_transaction(sm_transaction, "0x4f11e05b6908439852b5ea7c97da15738dfadd111b3fc89d4c812423fa929b45")
+    transaction_hash = w3.eth.send_raw_transaction(signedTransaction.rawTransaction)
+    tx_receipt = w3.eth.wait_for_transaction_receipt(transaction_hash)
     contract = w3.eth.contract(address=tx_receipt.contractAddress, abi=contract.abi, bytecode=contract.bytecode)
     new_map = {
         'name': name,
@@ -89,13 +87,13 @@ def write(w3: Web3, contract: Contract, function_name: str, args: any):
         "from": w3.eth.accounts[0],
         "to": contract.address,
         "data": contract.encodeABI(fn_name=function_name, args=args),
-        "gas": w3.toHex(6721975),
-        "gasPrice": w3.toWei('0', 'gwei'),
+        "gas": w3.to_hex(6721975),
+        "gasPrice": w3.to_wei('0', 'gwei'),
         "nonce": w3.eth.get_transaction_count(w3.eth.accounts[0])
     }
-    signedTransaction = w3.eth.account.signTransaction(new_transaction, "0x4f11e05b6908439852b5ea7c97da15738dfadd111b3fc89d4c812423fa929b45")
-    transaction_hash = w3.eth.sendRawTransaction(signedTransaction.rawTransaction)
-    receipt = w3.eth.waitForTransactionReceipt(transaction_hash)
+    signedTransaction = w3.eth.account.sign_transaction(new_transaction, "0x4f11e05b6908439852b5ea7c97da15738dfadd111b3fc89d4c812423fa929b45")
+    transaction_hash = w3.eth.send_raw_transaction(signedTransaction.rawTransaction)
+    receipt = w3.eth.wait_for_transaction_receipt(transaction_hash)
     return receipt
 
 def init_web3():
@@ -284,7 +282,7 @@ class SolidityPage(tk.Toplevel):
             smartContractBytecode = smartContractInterface['bin']
             smartContractAbi = smartContractInterface['abi']
             receipt = write(web3_1, onChainSmartContract, "getNextAddress", [])
-            logs = onChainSmartContract.events.NextAddressReturned().processReceipt(receipt)
+            logs = onChainSmartContract.events.NextAddressReturned().process_receipt(receipt)
             nextAddress = logs[0]['args']['nextAddress']
             web3_c = Web3(HTTPProvider(nextAddress))
             if web3_c.is_connected():
@@ -338,7 +336,7 @@ class ABIBytecodePage(tk.Toplevel):
         smartContractAbi = self.abi_label.get()
         smartContractBytecode = self.bytecode_label.get()
         receipt = write(web3_1, onChainSmartContract, "getNextAddress", [])
-        logs = onChainSmartContract.events.NextAddressReturned().processReceipt(receipt)
+        logs = onChainSmartContract.events.NextAddressReturned().process_receipt(receipt)
         nextAddress = logs[0]['args']['nextAddress']
         web3_c = Web3(HTTPProvider(nextAddress))
         if web3_c.is_connected():
