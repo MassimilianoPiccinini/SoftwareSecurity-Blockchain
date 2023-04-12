@@ -342,7 +342,7 @@ class ABIBytecodePage(tk.Toplevel):
         if web3_c.is_connected():
             print("Connected to " + nextAddress)
             customSmartContract = web3_c.eth.contract(abi=smartContractAbi, bytecode=smartContractBytecode)
-            deploy(web3_c, customSmartContract, name)
+            customSmartContract = deploy(web3_c, customSmartContract, name)
             write(web3_1, onChainSmartContract, 'addContract', [name, str(nextAddress), str(customSmartContract.address), str(smartContractAbi)])
             result = read(onChainSmartContract, 'getContract', [name])
             print("Result: " + str(result))
