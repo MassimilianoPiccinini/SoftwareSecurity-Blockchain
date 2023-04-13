@@ -498,7 +498,7 @@ class MethodsPage(tk.Toplevel):
         abi = data[2].replace("'", '"').replace(
             'False', 'false').replace('True', 'true')
         web3_c = Web3(HTTPProvider(blockChainAddress))
-        if web3_c.isConnected():
+        if web3_c.is_connected():
             print("Connected to " + blockChainAddress)
             customSmartContract = web3_c.eth.contract(address=address, abi=abi)
             if arg1 and arg2 and arg3:
