@@ -18,10 +18,6 @@ web3_2 = None
 web3_3 = None
 web3_4 = None
 
-def start_blockchains():
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    subprocess.call(['bash', os.path.join(current_dir, "init.sh")])
-
 def get_sc(filename):
     current_dir = os.path.dirname(os.path.abspath(__file__))
     with open(os.path.join(current_dir, filename), 'r') as file:
