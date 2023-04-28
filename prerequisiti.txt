@@ -1,0 +1,5 @@
+!pacchetti da installare prima dell'esecuzione di  src/offchain.py
+(sudo) npm install ganache-cli -g
+pip install py-solc-x
+pip install Pillow
+pip install web3

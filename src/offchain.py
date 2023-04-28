@@ -1,3 +1,7 @@
+from tkinter import filedialog
+from web3 import Web3
+from web3.contract import Contract
+from web3.providers.rpc import HTTPProvider
 from solcx import install_solc
 from web3.providers.rpc import HTTPProvider
 from web3.contract import Contract
@@ -10,7 +14,6 @@ import os
 import tkinter as tk
 from PIL import Image, ImageTk
 import threading
-import time
 import json
 import solcx
 
@@ -408,16 +411,18 @@ class ABIBytecodePage(tk.Toplevel):
         smartContractAbi = self.abi_label.get()
         smartContractBytecode = self.bytecode_label.get()
         receipt = write(web3_1, onChainSmartContract, "getNextAddress", [])
-        logs = onChainSmartContract.events.NextAddressReturned().processReceipt(receipt)
+        logs = onChainSmartContract.events.NextAddressReturned().process_receipt(receipt)
         nextAddress = logs[0]['args']['nextAddress']
         web3_c = Web3(HTTPProvider(nextAddress))
         if web3_c.is_connected():
             print("Connected to " + nextAddress)
+
             customSmartContract = web3_c.eth.contract(
                 abi=smartContractAbi, bytecode=smartContractBytecode)
-            deploy(web3_c, customSmartContract, name)
+            customSmartContract = deploy(web3_c, customSmartContract, name)
             write(web3_1, onChainSmartContract, 'addContract', [name, str(
                 nextAddress), str(customSmartContract.address), str(smartContractAbi)])
+
             result = read(onChainSmartContract, 'getContract', [name])
             print("Result: " + str(result))
         else:
