@@ -2,13 +2,35 @@
 
 ## Python-based tool for deploying and interacting with smart contracts using the Web3 library and Tkinter GUI framework.
 
-My Program is a Python program that does X, Y, and Z. It provides a set of functions that can be used to perform various operations related to X, Y, and Z.
+The program allows users to:
+
+Deploying a Smart Contract: The tool allows you to deploy a smart contract by providing either a Solidity file or the ABI (Application Binary Interface) and bytecode of the contract. You can specify a name for the contract and initiate the deployment process.
+
+Calling Methods of an Existing Contract: Once a contract is deployed, you can interact with it by calling its methods. The program provides a dropdown list of deployed contracts, allowing you to select a contract and choose a method to call. You can provide any required arguments and execute the method.
+
+Deleting a Smart Contract: If you want to remove a deployed contract from the blockchain, the tool offers a functionality to delete contracts. You can select a contract from the dropdown list and delete it, removing it permanently from the blockchain.
 
 ## List of functions
 
-- `function1(arg1, arg2, ...)` - Description of function 1
-- `function2(arg1, arg2, ...)` - Description of function 2
-- `function3(arg1, arg2, ...)` - Description of function 3
+- Click on the "Deploy il file .sol" button to deploy a contract from a Solidity file.
+Provide a name for the contract and browse for the Solidity file to deploy.
+Click the "Deploy" button to deploy the contract.
+Deploying from ABI and Bytecode:
+
+- Click on the "Deploy da ABI e Bytecode" button to deploy a contract using its ABI and bytecode.
+Provide a name for the contract and enter the ABI and bytecode in the respective fields.
+Click the "Deploy" button to deploy the contract.
+Calling a Method of an Existing Contract:
+
+- Click on the "Chiama metodo" button to call a method of an existing smart contract.
+Select the contract from the dropdown list and choose the method to call.
+Provide the required arguments and click the "Call" button to execute the method.
+Deleting a Smart Contract:
+
+- Click on the "Elimina Smart Contract" button to delete a deployed contract.
+Select the contract from the dropdown list and click the "Delete" button to remove the contract.
+Contributing
+Contributions are welcome! If you have any suggestions, bug reports, or feature requests, please open an issue or submit a pull request.
 
 ## Installation
 
