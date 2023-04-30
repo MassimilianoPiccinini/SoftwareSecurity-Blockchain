@@ -48,7 +48,7 @@ Python 3.x
 
 3. Install the ganache command line interface:
 
-```$ npm install ganache```
+```$ npm install ganache --global```
 
 4. Install the dependencies using pip:
 
