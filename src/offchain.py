@@ -1,3 +1,4 @@
+import platform
 from tkinter import filedialog
 from web3 import Web3
 from web3.contract import Contract
@@ -11,6 +12,11 @@ import tkinter as tk
 from PIL import Image, ImageTk
 import threading
 import json
+from dotenv import load_dotenv
+
+load_dotenv()
+
+PRIVATE_KEY = os.getenv('PRIVATE_KEY')
 
 onChainSmartContract = None
 web3_1 = None
@@ -56,7 +62,7 @@ def deploy(w3: Web3, contract: Contract, name: str):
         "data": contract.bytecode,
         'chainId': w3.eth.chain_id
     }
-    signedTransaction = w3.eth.account.sign_transaction(sm_transaction, "0x4f11e05b6908439852b5ea7c97da15738dfadd111b3fc89d4c812423fa929b45")
+    signedTransaction = w3.eth.account.sign_transaction(sm_transaction, PRIVATE_KEY)
     transaction_hash = w3.eth.send_raw_transaction(signedTransaction.rawTransaction)
     tx_receipt = w3.eth.wait_for_transaction_receipt(transaction_hash)
     contract = w3.eth.contract(address=tx_receipt.contractAddress, abi=contract.abi, bytecode=contract.bytecode)
@@ -93,7 +99,7 @@ def write(w3: Web3, contract: Contract, function_name: str, args: any):
         'chainId': w3.eth.chain_id
     }
     #"gas": w3.to_hex(6721975),
-    signedTransaction = w3.eth.account.sign_transaction(new_transaction, "0x4f11e05b6908439852b5ea7c97da15738dfadd111b3fc89d4c812423fa929b45")
+    signedTransaction = w3.eth.account.sign_transaction(new_transaction, PRIVATE_KEY)
     transaction_hash = w3.eth.send_raw_transaction(signedTransaction.rawTransaction)
     receipt = w3.eth.wait_for_transaction_receipt(transaction_hash)
     return receipt
@@ -165,8 +171,23 @@ class Loader(tk.Frame):
 
     def run_script(self):
         current_dir = os.path.dirname(os.path.abspath(__file__))
-        command = ['bash', os.path.join(current_dir, "init.sh")]
-        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+        system = platform.system()
+        try:
+            if system == 'Windows':
+                dir = os.path.join(current_dir, "init.sh")
+                process = subprocess.Popen([dir], stdout=subprocess.PIPE, shell=True, stderr=subprocess.PIPE, universal_newlines=True)
+            elif system == 'Linux':
+                command = ['bash', os.path.join(current_dir, "init.sh")]
+                process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+            elif system == 'Darwin':
+                command = ['bash', os.path.join(current_dir, "init.sh")]
+                process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+            else:
+                print(f"Error: Unsupported system '{system}'")
+        except Exception as e:
+            print("Errore", "File non trovato al percorso " + e)
+
+        
         while True:
             output = process.stdout.readline()
             if not output and process.poll() is not None:
@@ -304,9 +325,6 @@ class SolidityPage(tk.Toplevel):
             smartContractAbi = smartContractInterface['abi']
             receipt = write(web3_1, onChainSmartContract, "getNextAddress", [])
             logs = onChainSmartContract.events.NextAddressReturned().process_receipt(receipt)
-            print(receipt)
-            print(logs)
-            print(logs[0])
             nextAddress = logs[0]['args']['nextAddress']
             web3_c = Web3(HTTPProvider(nextAddress))
             if web3_c.is_connected():
